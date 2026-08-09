@@ -1,0 +1,16 @@
+[project]
+name = "ai-incident-copilot"
+version = "0.1.0"
+description = "Production AI Incident & Knowledge Copilot — AI Engineer learning capstone"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
