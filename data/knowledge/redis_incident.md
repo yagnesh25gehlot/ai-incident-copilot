@@ -25,3 +25,5 @@ The session service recovered after Redis became writable again.
 
 Monitor Redis memory utilization and rejected writes.
 Configure alerts before memory usage approaches the configured limit.
+
+Incident ID: INC-REDIS-7421

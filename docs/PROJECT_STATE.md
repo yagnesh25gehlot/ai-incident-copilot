@@ -6,9 +6,9 @@
 
 Project: **Production AI Incident & Knowledge Copilot**
 Sprint: **14-day AI Engineer capstone**
-Current day: **Day 2 — Embeddings + Similarity Search**
-Current phase: **Day 2 checkpoint**
-Overall status: **DAY 2 COMPLETE — final Git checkpoint pending**
+Current day: Day 5 — Production RAG: BM25 + Hybrid Search + Reranking
+Current phase: Day 5 checkpoint
+Overall status: DAY 5 COMPLETE — final Git checkpoint pending
 
 ## Permanent local project root
 
@@ -1025,10 +1025,203 @@ Expected Day 4 Git changes:
 - `uv.lock`
 - `PROJECT_STATE.md`
 
+# Day 5 — Production RAG: BM25 + Hybrid Search + Reranking
+
+Status: **COMPLETE**
+
+## Theory completed
+
+- [x] Understood lexical retrieval
+- [x] Understood term frequency intuition
+- [x] Understood document frequency
+- [x] Understood inverse document frequency
+- [x] Understood TF-IDF intuition
+- [x] Understood BM25 intuition
+- [x] Understood BM25 term-frequency saturation
+- [x] Understood BM25 document-length normalization
+- [x] Understood dense vs sparse retrieval
+- [x] Understood lexical retrieval strengths for exact identifiers/error codes
+- [x] Understood semantic retrieval strengths for paraphrases
+- [x] Understood hybrid retrieval
+- [x] Understood why raw BM25 and cosine scores should not be naively added
+- [x] Understood Reciprocal Rank Fusion
+- [x] Understood candidate generation vs final ranking
+- [x] Understood retrieval recall vs reranking precision
+- [x] Understood bi-encoder vs cross-encoder architecture
+- [x] Understood cross-encoder quality/latency tradeoff
+- [x] Understood why reranking the entire corpus is expensive
+
+## Dependencies
+
+Added:
+
+- `rank-bm25`
+
+Existing `sentence-transformers` dependency reused for:
+
+- `CrossEncoder`
+- dense embedding model
+
+## Implementation completed
+
+Implemented:
+
+`src/bm25_retriever.py`
+
+Capabilities:
+
+- [x] BM25 index over ingested chunks
+- [x] Basic lowercase whitespace tokenization
+- [x] BM25 query scoring
+- [x] top-k lexical ranking
+- [x] source/chunk metadata preserved
+
+Implemented:
+
+`src/compare_bm25_dense.py`
+
+Capabilities:
+
+- [x] Same-query comparison between BM25 and pgvector dense retrieval
+- [x] lexical query experiment
+- [x] semantic paraphrase experiment
+- [x] exact identifier experiment
+
+Implemented:
+
+`src/hybrid_retriever.py`
+
+Capabilities:
+
+- [x] BM25 candidate retrieval
+- [x] dense candidate retrieval
+- [x] chunk identity using source + chunk_id
+- [x] Reciprocal Rank Fusion
+- [x] configurable candidate_k
+- [x] configurable final top_k
+
+Implemented:
+
+`src/reranker.py`
+
+Capabilities:
+
+- [x] cross-encoder candidate reranking
+- [x] query-document pair construction
+- [x] final top-k ranking
+- [x] preserved RRF score and reranker score for inspection
+
+Implemented:
+
+`src/compare_retrieval_methods.py`
+
+Capabilities:
+
+- [x] BM25 comparison
+- [x] dense comparison
+- [x] hybrid RRF comparison
+- [x] hybrid + reranker comparison
+
+Created:
+
+`EXPERIMENTS.md`
+
+with Day 5 retrieval observations.
+
+## Key experiments
+
+### Exact identifier
+
+Query:
+
+`INC-REDIS-7421`
+
+BM25 correctly produced a strong Redis lexical match.
+
+Key lesson:
+
+Exact identifiers and similar tokens are strong lexical-retrieval use cases.
+
+### Semantic query with weak lexical overlap
+
+Query:
+
+`Why can't the service acquire a DB slot?`
+
+BM25 incorrectly favored TLS/Redis chunks.
+
+Dense retrieval correctly ranked PostgreSQL chunks.
+
+Key lesson:
+
+Dense retrieval can recover semantic similarity when query and source terminology differ.
+
+### Hybrid RRF
+
+RRF combined BM25 and dense rankings without combining incompatible raw scores.
+
+However, for the DB-slot query, RRF did not produce the best final ranking.
+
+Key lesson:
+
+Hybrid retrieval can improve candidate recall but does not guarantee final precision.
+
+### Cross-encoder reranking
+
+For the DB-slot query, reranking promoted a PostgreSQL chunk to rank 1.
+
+Observed top reranker scores:
+
+- PostgreSQL chunk 1: `-10.5761`
+- Redis chunk 0: `-10.6054`
+- PostgreSQL chunk 0: `-10.6302`
+
+The ranking improved, but the score margin was small.
+
+Therefore no strong claim about reranker superiority is made yet.
+
+Quantitative evaluation is deferred to Day 6.
+
+## Current production-style retrieval architecture
+
+`query`
+
+→ BM25 lexical retrieval
+
++
+
+→ MiniLM query embedding → PostgreSQL/pgvector dense retrieval
+
+→ Reciprocal Rank Fusion
+
+→ candidate set
+
+→ cross-encoder reranker
+
+→ final top-k chunks
+
+→ RAG context
+
+→ LLM
+
+## Current limitations
+
+- corpus contains only a few knowledge documents
+- BM25 tokenizer is intentionally basic
+- no systematic labeled retrieval dataset yet
+- candidate_k and top_k are not calibrated
+- RRF k=60 is currently a default, not experimentally tuned
+- reranker quality has only been inspected on a few manual queries
+- retrieval latency has not yet been benchmarked systematically
+
+## Current blockers
+
+None.
+
 ## Next learning session
 
-**Day 5 — Production RAG: BM25 + Hybrid Search + Reranking**
+**Day 6 — RAG Evaluation + Prompt Evaluation**
 
 Next exact action:
 
-Implement lexical/BM25 retrieval, compare it against dense retrieval, combine both using hybrid search, and add reranking.
+Create a small labeled/golden retrieval dataset and implement quantitative retrieval evaluation using metrics such as Recall@K and MRR before tuning retrieval parameters.

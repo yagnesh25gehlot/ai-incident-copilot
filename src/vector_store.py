@@ -114,3 +114,7 @@ class PgVectorStore:
                 )
 
                 return cur.fetchall()
+
+
+class VectorStore:
+    pass
