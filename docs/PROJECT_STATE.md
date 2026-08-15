@@ -577,3 +577,458 @@ Planned learning:
 12. Test an unsupported question and observe RAG failure behavior.
 
 Do not start Day 3 implementation until the Day 2 Git checkpoint is complete.
+
+# Day 3 — Document Ingestion + Basic RAG
+
+Status: **COMPLETE**
+
+## Theory completed
+
+- [x] Understood document ingestion pipeline
+- [x] Understood loading vs chunking
+- [x] Understood ingestion vs indexing vs retrieval vs generation
+- [x] Understood chunk-size tradeoffs
+- [x] Understood chunk overlap
+- [x] Understood metadata
+- [x] Understood RAG grounding
+- [x] Understood top-k behavior
+- [x] Understood that top-ranked does not necessarily mean relevant
+- [x] Understood similarity-threshold tradeoffs
+- [x] Understood unsupported-query behavior
+- [x] Understood retrieved source vs supporting source
+- [x] Understood that RAG does not eliminate hallucination
+
+## Implementation completed
+
+- [x] Created local Markdown knowledge corpus
+- [x] Added PostgreSQL runbook
+- [x] Added Redis incident
+- [x] Added TLS runbook
+- [x] Implemented `Chunk` dataclass
+- [x] Implemented Markdown document loading
+- [x] Implemented fixed-size word chunking
+- [x] Implemented chunk overlap
+- [x] Added source and chunk ID metadata
+- [x] Implemented `ChunkRetriever`
+- [x] Generated normalized embeddings for chunks
+- [x] Implemented dense top-k retrieval
+- [x] Added minimum similarity filtering
+- [x] Built retrieved context for the LLM
+- [x] Connected retrieval to local Qwen
+- [x] Generated first grounded RAG answer
+- [x] Added structured RAG response with Pydantic
+- [x] Added citation validation against retrieved sources
+- [x] Added deterministic fallback when no relevant chunks are found
+
+## Experiments
+
+### Supported question
+
+Question:
+
+`Why are payment API requests timing out?`
+
+Observed:
+
+- PostgreSQL runbook ranked first.
+- Qwen generated the correct explanation that the PostgreSQL connection pool was exhausted.
+- Dense retrieval also returned irrelevant TLS chunks.
+
+### Unsupported question
+
+Question:
+
+`Why is the Kafka consumer lag increasing in the order service?`
+
+Without threshold:
+
+- PostgreSQL chunks were still returned because top-k always returns the best available matches.
+- Qwen incorrectly attributed Kafka lag to PostgreSQL-related causes.
+
+Classification:
+
+**retrieval failure followed by generation hallucination**
+
+Added temporary:
+
+`min_score = 0.3`
+
+This prevented low-scoring unsupported retrieval and used a deterministic fallback instead.
+
+Important:
+
+`0.3` is experimental and has not been calibrated through evaluation.
+
+### Chunk-size experiment
+
+Baseline:
+
+- `chunk_size = 80 words`
+- `overlap = 20 words`
+- 7 chunks
+- best retrieval score approximately `0.50`
+- good final answer
+
+Experiment:
+
+- `chunk_size = 20 words`
+- `overlap = 0`
+- 18 chunks
+- best retrieval score approximately `0.72`
+- final answer quality became worse because context was fragmented
+
+Key lesson:
+
+**Higher retrieval similarity does not necessarily mean better end-to-end RAG answer quality.**
+
+## Current baseline
+
+- Chunk size: `80 words`
+- Overlap: `20 words`
+- `top_k = 3`
+- `min_score = 0.3` — experimental only
+- Embedding model: `sentence-transformers/all-MiniLM-L6-v2`
+- Embedding dimension: `384`
+- Generator: `Qwen2.5-0.5B-Instruct Q4_K_M`
+- Vector search: exact brute-force in-memory search
+
+## Git checkpoint
+
+Day 3 commit:
+
+`cc16666 — Complete Day 3 document ingestion and basic RAG`
+
+Pushed successfully to `origin/main`.
+
+## Current blockers
+
+None.
+
+## Next learning session
+
+**Day 4 — PostgreSQL + pgvector + vector indexing**
+
+Next exact action:
+
+Start PostgreSQL + pgvector in Docker and move persisted chunks/embeddings from Python memory into PostgreSQL.
+
+
+# Day 4 — PostgreSQL + pgvector + Vector Indexing
+
+Status: **COMPLETE**
+
+## Theory completed
+
+- [x] Understood relational data vs vector data
+- [x] Understood why pgvector is useful
+- [x] Understood pgvector as a PostgreSQL extension rather than a separate database
+- [x] Understood exact nearest-neighbor search vs approximate nearest-neighbor search
+- [x] Understood HNSW intuition
+- [x] Understood recall vs latency tradeoff
+- [x] Understood metadata filtering
+- [x] Understood metadata-filter precision/recall tradeoff
+- [x] Understood HNSW `m`
+- [x] Understood HNSW `ef_construction`
+- [x] Understood HNSW `ef_search`
+- [x] Understood that creating an index does not guarantee PostgreSQL will use it
+- [x] Understood why sequential scan can be preferable for very small tables
+- [x] Understood index storage/write-cost tradeoffs
+
+## PostgreSQL / pgvector setup
+
+Docker container:
+
+`incident-copilot-postgres`
+
+Image:
+
+`pgvector/pgvector:pg17`
+
+Host/container port mapping:
+
+`5433 -> 5432`
+
+Database:
+
+`incident_copilot`
+
+User:
+
+`copilot`
+
+pgvector extension version:
+
+`0.8.6`
+
+Verified with:
+
+`SELECT extname, extversion FROM pg_extension WHERE extname = 'vector';`
+
+## Database schema
+
+Created table:
+
+`chunks`
+
+Fields:
+
+- `id BIGSERIAL PRIMARY KEY`
+- `source TEXT NOT NULL`
+- `chunk_id INTEGER NOT NULL`
+- `content TEXT NOT NULL`
+- `embedding VECTOR(384) NOT NULL`
+
+Embedding dimension remains `384` because the current embedding model is:
+
+`sentence-transformers/all-MiniLM-L6-v2`
+
+## Python dependencies added
+
+- `psycopg[binary]`
+- `pgvector`
+
+## Implementation completed
+
+Implemented:
+
+`src/vector_store.py`
+
+Capabilities:
+
+- [x] PostgreSQL connection through psycopg
+- [x] pgvector Python type registration
+- [x] Clear stored chunks
+- [x] Insert one vector-backed chunk
+- [x] Batch insert chunks
+- [x] PostgreSQL cosine-distance retrieval
+- [x] Conversion of cosine distance back to similarity
+- [x] Metadata filtering by source
+
+Implemented:
+
+`src/index_to_postgres.py`
+
+Capabilities:
+
+- [x] Reused Day 3 ingestion pipeline
+- [x] Loaded Markdown knowledge documents
+- [x] Generated normalized MiniLM embeddings
+- [x] Combined each Chunk with its matching embedding using `zip`
+- [x] Persisted chunk metadata, text, and embeddings into PostgreSQL
+
+Implemented:
+
+`src/postgres_search.py`
+
+Capabilities:
+
+- [x] Generated query embedding
+- [x] Sent query vector to PostgreSQL
+- [x] Retrieved top-k chunks using pgvector cosine distance
+- [x] Printed similarity scores and source metadata
+- [x] Tested metadata-filtered retrieval
+
+Implemented:
+
+`src/compare_retrievers.py`
+
+Capabilities:
+
+- [x] Compared Day 3 NumPy retrieval with PostgreSQL retrieval
+- [x] Verified matching ranking behavior
+- [x] Verified matching similarity scores
+
+## Day 4 ingestion result
+
+Observed:
+
+- Loaded chunks: `7`
+- Embedding shape: `(7, 384)`
+- Inserted PostgreSQL chunks: `7`
+
+## PostgreSQL retrieval experiment
+
+Question:
+
+`Why are payment API requests timing out?`
+
+Observed PostgreSQL results:
+
+1. `0.4999` → `postgres_runbook.md`, chunk `0`
+2. `0.3492` → `tls_runbook.md`, chunk `0`
+
+This reproduced the Day 3 dense-retrieval behavior.
+
+Key lesson:
+
+The migration from in-memory NumPy retrieval to PostgreSQL/pgvector preserved retrieval behavior while adding persistence and database-native search.
+
+## NumPy vs pgvector comparison
+
+Day 3 NumPy retrieval:
+
+`normalized document embeddings @ normalized query embedding`
+
+PostgreSQL retrieval:
+
+`1 - (embedding <=> query_embedding)`
+
+Because both query and document vectors are normalized:
+
+`dot product ≈ cosine similarity`
+
+The top-k ranking and similarity scores matched closely between both implementations.
+
+This validated correctness of the PostgreSQL migration.
+
+## Metadata filtering experiment
+
+Added source filtering:
+
+`WHERE source = %s`
+
+Key lesson:
+
+Correct metadata filters can:
+
+- improve precision
+- reduce irrelevant candidates
+- reduce search work
+
+Incorrect or overly strict metadata filters can:
+
+- exclude correct evidence
+- lower retrieval recall
+
+## HNSW index
+
+Created:
+
+`chunks_embedding_hnsw_idx`
+
+Using:
+
+`hnsw (embedding vector_cosine_ops)`
+
+Reason for `vector_cosine_ops`:
+
+The current retrieval metric is cosine distance through pgvector's `<=>` operator.
+
+## HNSW mental model
+
+HNSW performs approximate nearest-neighbor search using a navigable hierarchical graph.
+
+Instead of comparing the query vector against every stored vector, it explores promising graph neighborhoods.
+
+Tradeoff:
+
+- exact search → maximum recall, more work at scale
+- HNSW / ANN → lower search cost and latency, potentially slightly lower recall
+
+## HNSW tuning concepts
+
+`m`
+
+Controls graph connectivity.
+
+Higher values can improve recall but increase index size and construction/search cost.
+
+`ef_construction`
+
+Controls how thoroughly the graph is searched while building the index.
+
+Higher values can create a better-quality graph but make index construction slower.
+
+`ef_search`
+
+Controls how broadly HNSW explores candidates at query time.
+
+Higher values:
+
+- improve recall
+- increase query latency/work
+
+Lower values:
+
+- reduce latency
+- may reduce recall
+
+## Query-plan experiment
+
+Used:
+
+`EXPLAIN ANALYZE`
+
+Important lesson:
+
+Creating an HNSW index does not force PostgreSQL to use it.
+
+With the current corpus of only 7 rows, PostgreSQL may prefer a sequential scan because scanning the whole table can be cheaper than index traversal.
+
+Therefore the current corpus is useful for understanding HNSW mechanics but not for meaningful ANN performance benchmarking.
+
+## Current retrieval architecture
+
+Ingestion:
+
+`Markdown -> Chunk -> MiniLM embedding -> PostgreSQL chunks table`
+
+Retrieval:
+
+`question -> MiniLM query embedding -> pgvector search -> top-k chunks`
+
+Current vector metric:
+
+`cosine distance`
+
+Current ANN index:
+
+`HNSW`
+
+Current metadata filter experiment:
+
+`source`
+
+## Day 4 key production lesson
+
+Moving vectors into PostgreSQL separates ingestion from retrieval.
+
+Previously:
+
+`application startup -> ingest -> embed -> keep vectors in RAM`
+
+Now:
+
+`offline/indexing step -> persist chunks and vectors in PostgreSQL`
+
+Then retrieval can happen independently:
+
+`query -> query embedding -> PostgreSQL vector search`
+
+This architecture is closer to a production RAG system.
+
+## Current blockers
+
+None.
+
+## Git checkpoint
+
+Pending.
+
+Expected Day 4 Git changes:
+
+- `src/vector_store.py`
+- `src/index_to_postgres.py`
+- `src/postgres_search.py`
+- `src/compare_retrievers.py`
+- `pyproject.toml`
+- `uv.lock`
+- `PROJECT_STATE.md`
+
+## Next learning session
+
+**Day 5 — Production RAG: BM25 + Hybrid Search + Reranking**
+
+Next exact action:
+
+Implement lexical/BM25 retrieval, compare it against dense retrieval, combine both using hybrid search, and add reranking.
