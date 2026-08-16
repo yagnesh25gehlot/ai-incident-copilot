@@ -1,0 +1,40 @@
+[
+  {
+    "question": "Why are payment API requests timing out?",
+    "reference_answer": "The PostgreSQL connection pool is exhausted. Requests wait for available database connections and eventually time out.",
+    "expected_sources": [
+      "postgres_runbook.md"
+    ],
+    "should_answer": true
+  },
+  {
+    "question": "What causes PostgreSQL connection pool exhaustion?",
+    "reference_answer": "Connection pool exhaustion can be caused by traffic spikes, slow database queries, or leaked application connections.",
+    "expected_sources": [
+      "postgres_runbook.md"
+    ],
+    "should_answer": true
+  },
+  {
+    "question": "Why were users unexpectedly logged out?",
+    "reference_answer": "Redis reached its memory limit and started rejecting writes, causing session updates to fail.",
+    "expected_sources": [
+      "redis_incident.md"
+    ],
+    "should_answer": true
+  },
+  {
+    "question": "How should an expired TLS certificate be fixed?",
+    "reference_answer": "Replace the expired or invalid certificate with a valid certificate and verify hostname and certificate-chain correctness.",
+    "expected_sources": [
+      "tls_runbook.md"
+    ],
+    "should_answer": true
+  },
+  {
+    "question": "Why is Kafka consumer lag increasing in the order service?",
+    "reference_answer": "The available knowledge base does not contain enough information to determine the cause.",
+    "expected_sources": [],
+    "should_answer": false
+  }
+]

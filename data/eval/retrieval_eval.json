@@ -1,0 +1,56 @@
+[
+  {
+    "query": "Why are payment API requests timing out?",
+    "relevant": [
+      ["postgres_runbook.md", 0],
+      ["postgres_runbook.md", 1]
+    ]
+  },
+  {
+    "query": "What causes PostgreSQL connection pool exhaustion?",
+    "relevant": [
+      ["postgres_runbook.md", 0],
+      ["postgres_runbook.md", 1]
+    ]
+  },
+  {
+    "query": "INC-REDIS-7421",
+    "relevant": [
+      ["redis_incident.md", 0],
+      ["redis_incident.md", 1]
+    ]
+  },
+  {
+    "query": "Why are users unexpectedly being logged out of active sessions?",
+    "relevant": [
+      ["redis_incident.md", 0]
+    ]
+  },
+  {
+    "query": "How do I prevent Redis memory exhaustion?",
+    "relevant": [
+      ["redis_incident.md", 0],
+      ["redis_incident.md", 1]
+    ]
+  },
+  {
+    "query": "What should I investigate when TLS handshakes fail?",
+    "relevant": [
+      ["tls_runbook.md", 0]
+    ]
+  },
+  {
+    "query": "Why can't the service acquire a DB slot?",
+    "relevant": [
+      ["postgres_runbook.md", 0],
+      ["postgres_runbook.md", 1]
+    ]
+  },
+  {
+    "query": "How should an expired TLS certificate be fixed?",
+    "relevant": [
+      ["tls_runbook.md", 0],
+      ["tls_runbook.md", 1]
+    ]
+  }
+]

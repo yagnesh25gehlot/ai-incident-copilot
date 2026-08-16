@@ -6,9 +6,9 @@
 
 Project: **Production AI Incident & Knowledge Copilot**
 Sprint: **14-day AI Engineer capstone**
-Current day: Day 5 — Production RAG: BM25 + Hybrid Search + Reranking
-Current phase: Day 5 checkpoint
-Overall status: DAY 5 COMPLETE — final Git checkpoint pending
+Current day: Day 6 — RAG Evaluation + Prompt Evaluation
+Current phase: Day 6 checkpoint
+Overall status: DAY 6 COMPLETE — final Git checkpoint pending
 
 ## Permanent local project root
 
@@ -1220,8 +1220,82 @@ None.
 
 ## Next learning session
 
-**Day 6 — RAG Evaluation + Prompt Evaluation**
+# Day 6 — RAG Evaluation + Prompt Evaluation
+
+Status: **COMPLETE**
+
+## Theory completed
+
+- [x] Understood offline evaluation
+- [x] Understood golden datasets
+- [x] Understood Precision@K
+- [x] Understood Recall@K
+- [x] Understood Reciprocal Rank
+- [x] Understood Mean Reciprocal Rank
+- [x] Understood DCG / NDCG intuition
+- [x] Understood retrieval vs generation evaluation
+- [x] Understood correctness vs faithfulness
+- [x] Understood citation validity vs citation relevance
+- [x] Understood LLM-as-judge limitations
+- [x] Understood human-evaluation necessity
+- [x] Understood AI regression testing
+- [x] Understood deterministic abstention
+
+## Implementation completed
+
+- [x] Created retrieval golden dataset
+- [x] Created answer golden dataset
+- [x] Implemented Precision@K
+- [x] Implemented Recall@K
+- [x] Implemented MRR
+- [x] Implemented NDCG
+- [x] Implemented four-way retrieval evaluator
+- [x] Implemented deterministic citation/source checks
+- [x] Implemented experimental LLM judge
+- [x] Tested correct/hallucinated/partial answers
+- [x] Rejected local judge as primary semantic evaluator
+- [x] Added reranker relevance threshold
+- [x] Added deterministic unsupported-query abstention
+- [x] Implemented AI regression gate
+- [x] Verified regression gate exit code 0
+
+## Current retrieval baseline
+
+Hybrid + reranker:
+
+- P@3: `0.583`
+- R@3: `1.000`
+- MRR: `1.000`
+- NDCG@3: `0.990`
+
+## Current deterministic RAG baseline
+
+- citation validity: `1.000`
+- expected-source recall: `1.000`
+- abstention accuracy: `1.000`
+- supported-query answer rate: `1.000`
+- unsupported-query abstention rate: `1.000`
+
+## Experimental relevance threshold
+
+`MIN_RERANK_SCORE = -2.0`
+
+Not yet calibrated on a sufficiently large dataset.
+
+## Important limitation
+
+The regression gate does not currently guarantee semantic answer correctness or full claim-level faithfulness.
+
+Human evaluation is still required for these dimensions.
+
+## Current blockers
+
+None.
+
+## Next learning session
+
+**Day 7 — Tool Calling + Agent Loop**
 
 Next exact action:
 
-Create a small labeled/golden retrieval dataset and implement quantitative retrieval evaluation using metrics such as Recall@K and MRR before tuning retrieval parameters.
+Implement safe tool schemas for knowledge search, synthetic log/incident lookup, and service/deployment information, then build a simple deterministic agent/tool loop with argument validation, error handling, and termination rules.
