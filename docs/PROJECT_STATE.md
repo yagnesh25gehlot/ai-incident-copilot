@@ -6,9 +6,9 @@
 
 Project: **Production AI Incident & Knowledge Copilot**
 Sprint: **14-day AI Engineer capstone**
-Current day: Day 6 — RAG Evaluation + Prompt Evaluation
-Current phase: Day 6 checkpoint
-Overall status: DAY 6 COMPLETE — final Git checkpoint pending
+Current day: Day 7 — Tool Calling + Agent Loop
+Current phase: Day 7 checkpoint
+Overall status: DAY 7 COMPLETE — final Git checkpoint pending
 
 ## Permanent local project root
 
@@ -1294,8 +1294,221 @@ None.
 
 ## Next learning session
 
-**Day 7 — Tool Calling + Agent Loop**
+# Day 7 — Tool Calling + Agent Loop
+
+Status: **COMPLETE**
+
+## Theory completed
+
+- [x] Understood tool/function calling
+- [x] Understood that tools are ordinary application functions exposed to an LLM
+- [x] Understood tool name + description + argument schema
+- [x] Understood tool calling vs agent loop
+- [x] Understood deterministic workflow vs agent
+- [x] Understood when not to use an agent
+- [x] Understood application-owned tool execution
+- [x] Understood tool allowlisting
+- [x] Understood least-privilege tool design
+- [x] Understood argument validation
+- [x] Understood agent termination rules
+- [x] Understood no-progress / repeated-tool-call detection
+- [x] Understood tool execution errors
+- [x] Understood timeout/retry concepts
+- [x] Understood why retries should depend on failure type
+- [x] Understood idempotency risk for retrying side-effecting tools
+- [x] Understood hybrid agent + deterministic workflow design
+
+## Implementation completed
+
+Implemented:
+
+`src/agent_tools.py`
+
+Capabilities:
+
+- [x] `SearchKnowledgeArgs`
+- [x] `SearchIncidentsArgs`
+- [x] `GetServiceInfoArgs`
+- [x] Pydantic validation for tool arguments
+- [x] `get_service_info`
+- [x] `search_incidents`
+- [x] `search_knowledge`
+- [x] Reused Day 5 hybrid BM25 + dense retrieval
+- [x] Reused cross-encoder reranking
+- [x] Applied reranker relevance threshold
+- [x] Lazy initialization of embedding/reranker models
+- [x] Tool registry
+- [x] Safe tool dispatcher
+- [x] Unknown-tool rejection
+- [x] Invalid-argument rejection
+- [x] Tool-execution error handling
+- [x] Timeout/retry experiment
+
+Implemented:
+
+`src/agent_loop.py`
+
+Capabilities:
+
+- [x] Structured `AgentDecision`
+- [x] Manual JSON tool-calling protocol
+- [x] Local Qwen agent routing
+- [x] JSON cleanup/parsing
+- [x] Narrow deterministic protocol normalization
+- [x] Tool execution feedback to model
+- [x] Evidence collection
+- [x] Maximum-step termination
+- [x] Duplicate-tool-call detection
+- [x] No-progress protection
+- [x] Deterministic fallback for weak-model routing
+- [x] Separate grounded final-answer generation
+
+## Tool set
+
+Production learning tools:
+
+1. `get_service_info`
+   - service version
+   - environment
+   - health/status
+   - backing database
+
+2. `search_incidents`
+   - synthetic incident lookup
+   - service/severity filtering
+
+3. `search_knowledge`
+   - BM25
+   - pgvector dense retrieval
+   - Reciprocal Rank Fusion
+   - cross-encoder reranking
+   - relevance filtering
+
+## Agent experiments
+
+### Invalid protocol
+
+The local Qwen initially returned:
+
+`action="search_incidents"`
+
+instead of:
+
+`action="tool"`
+
+Pydantic rejected the invalid decision.
+
+A narrow deterministic normalization layer was added for this unambiguous protocol error.
+
+### Ungrounded final-answer attempt
+
+Before using a tool, the model attempted to invent causes such as:
+
+- high traffic
+- network issues
+- server overload
+
+The application rejected ungrounded final answers.
+
+### Repeated tool-call loop
+
+The model repeatedly called the same tool with identical arguments.
+
+Added:
+
+- executed-call history
+- duplicate detection
+- no-progress termination
+- deterministic fallback
+
+### Successful agent run
+
+Question:
+
+`Why is payment-api timing out?`
+
+Observed path:
+
+`user -> search_incidents -> tool evidence -> final`
+
+Tool evidence identified:
+
+`PostgreSQL connection pool exhaustion`
+
+Final grounded answer:
+
+`Payment API requests timing out due to PostgreSQL connection pool exhaustion.`
+
+### Knowledge-tool experiment
+
+Query:
+
+`Why are payment API requests timing out?`
+
+Before threshold:
+
+- PostgreSQL chunk 0: rerank approximately `3.9629`
+- PostgreSQL chunk 1: approximately `-9.7003`
+- TLS chunk 0: approximately `-9.8970`
+
+Using:
+
+`MIN_RERANK_SCORE = -2.0`
+
+only PostgreSQL chunk 0 was returned.
+
+Key lesson:
+
+`top_k=3` means at most three useful results, not exactly three regardless of relevance.
+
+## Reliability experiments
+
+Tested:
+
+- invalid arguments
+- unknown tool
+- synthetic tool exception
+- timeout behavior
+- retry policy
+- maximum-step termination
+- repeated identical tool calls
+
+Important retry lesson:
+
+Permanent errors such as invalid arguments or unknown tools should not be retried.
+
+Transient failures such as network timeouts may be retried when the operation is safe.
+
+Side-effecting operations require idempotency/deduplication before blind retrying.
+
+## Key production lesson
+
+LLM agents should not own application authority.
+
+The LLM may propose the next action, but application code owns:
+
+- allowed tools
+- argument validation
+- authorization
+- execution
+- retries
+- timeouts
+- termination
+- no-progress detection
+- deterministic fallbacks
+
+More agent autonomy is not automatically better.
+
+For predictable execution paths, deterministic workflows are usually safer, cheaper, faster, and easier to test.
+
+## Current blockers
+
+None.
+
+## Next learning session
+
+**Day 8 — LangGraph + State + Memory + Guardrails + Human-in-the-Loop**
 
 Next exact action:
 
-Implement safe tool schemas for knowledge search, synthetic log/incident lookup, and service/deployment information, then build a simple deterministic agent/tool loop with argument validation, error handling, and termination rules.
+Replace the manual agent-loop orchestration with an explicit LangGraph state graph while preserving the Day 7 tool safety boundaries.lement safe tool schemas for knowledge search, synthetic log/incident lookup, and service/deployment information, then build a simple deterministic agent/tool loop with argument validation, error handling, and termination rules.
