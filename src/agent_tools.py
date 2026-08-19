@@ -9,6 +9,34 @@ class SlowToolArgs(BaseModel):
     sleep_seconds: float = Field(ge=0, le=10)
 
 
+
+
+class RestartServiceArgs(BaseModel):
+    service: str = Field(
+        min_length=2,
+        max_length=100,
+        pattern=r"^[A-Za-z0-9._-]+$",
+    )
+
+
+def restart_service(args: RestartServiceArgs) -> dict:
+    """
+    Learning-only synthetic high-risk tool.
+
+    IMPORTANT:
+    This does NOT restart any real service.
+    """
+
+    return {
+        "service": args.service,
+        "status": "restart-simulated",
+        "message": (
+            "Learning simulation only. "
+            "No real service was restarted."
+        ),
+    }
+
+
 def slow_tool(args: SlowToolArgs) -> dict:
     time.sleep(args.sleep_seconds)
 
@@ -194,13 +222,9 @@ TOOL_REGISTRY = {
         "args_model": GetServiceInfoArgs,
         "function": get_service_info,
     },
-    "failure_test": {
-        "args_model": FailureTestArgs,
-        "function": failure_test,
-    },
-    "slow_tool": {
-        "args_model": SlowToolArgs,
-        "function": slow_tool,
+    "restart_service": {
+        "args_model": RestartServiceArgs,
+        "function": restart_service,
     },
 }
 
