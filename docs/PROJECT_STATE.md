@@ -1507,8 +1507,338 @@ None.
 
 ## Next learning session
 
-**Day 8 — LangGraph + State + Memory + Guardrails + Human-in-the-Loop**
+# Day 8 — LangGraph + State + Memory + Guardrails + HITL
 
-Next exact action:
+Status: **IMPLEMENTATION PREPARED — RUNTIME VALIDATION DEFERRED**
 
-Replace the manual agent-loop orchestration with an explicit LangGraph state graph while preserving the Day 7 tool safety boundaries.lement safe tool schemas for knowledge search, synthetic log/incident lookup, and service/deployment information, then build a simple deterministic agent/tool loop with argument validation, error handling, and termination rules.
+## Theory completed
+
+- [x] Understood graph/state-machine thinking
+- [x] Understood LangGraph StateGraph
+- [x] Understood nodes
+- [x] Understood edges
+- [x] Understood conditional edges
+- [x] Understood graph cycles
+- [x] Understood router node vs deterministic routing function
+- [x] Understood shared graph state
+- [x] Understood state vs checkpoint
+- [x] Understood short-term memory
+- [x] Understood long-term memory
+- [x] Understood memory vs RAG
+- [x] Understood thread_id
+- [x] Understood checkpoint persistence
+- [x] Understood run-scoped vs thread-scoped state
+- [x] Understood guardrails
+- [x] Understood direct vs indirect prompt injection
+- [x] Understood retrieved RAG content must be treated as untrusted data
+- [x] Understood tool authorization / least privilege
+- [x] Understood deterministic logic vs probabilistic LLM reasoning
+- [x] Understood Human-in-the-Loop
+- [x] Understood interrupt / pause / resume concept
+- [x] Understood why checkpoints are required for HITL
+- [x] Understood why side effects must happen after approval
+- [x] Completed Day 8 interview/concept drill
+
+## Implementation completed and verified
+
+- [x] Installed LangGraph
+- [x] Implemented basic StateGraph
+- [x] Implemented nodes and edges
+- [x] Implemented conditional routing
+- [x] Implemented graph loop: router -> tool -> router
+- [x] Integrated real Day 7 safe tool dispatcher
+- [x] Integrated local Qwen routing
+- [x] Added AgentDecision Pydantic validation
+- [x] Added narrow deterministic protocol normalization
+- [x] Added graph-level guardrail branch
+- [x] Added dedicated grounded final-answer node
+- [x] Verified search_incidents inside LangGraph
+- [x] Verified search_knowledge inside LangGraph
+- [x] Verified malformed LLM JSON is caught by guardrail
+- [x] Verified grounded final answer after routing failure
+
+## Final implementation prepared but NOT YET RUN
+
+Prepared final code for:
+
+- [ ] InMemorySaver checkpointing
+- [ ] thread_id based short-term state persistence
+- [ ] run-scoped state reset
+- [ ] prompt-injection protection
+- [ ] synthetic restart_service high-risk tool
+- [ ] high-risk vs read-only tool classification
+- [ ] HITL approval node
+- [ ] LangGraph interrupt()
+- [ ] Command(resume=True/False)
+- [ ] human approval path
+- [ ] human rejection path
+- [ ] defense-in-depth check before high-risk tool execution
+
+## Intentional deferment
+
+The final Day 8 integrated implementation will NOT be executed now.
+
+Reason:
+
+Continue the learning sprint through Day 9 and Day 10 first.
+
+After Day 10 is complete, return to Day 8 and run the final validation suite.
+
+## Required Day 8 validation after Day 10
+
+Test 1 — Normal investigation:
+
+`uv run python src/langgraph_agent.py`
+
+Expected:
+
+`router -> read-only tool -> router -> grounded final answer`
+
+Test 2 — High-risk action approval:
+
+`uv run python src/langgraph_agent.py "restart payment-api"`
+
+Approve with:
+
+`y`
+
+Expected:
+
+`router -> approval interrupt -> human approval -> synthetic restart_service`
+
+No real service should be restarted.
+
+Test 3 — High-risk action rejection:
+
+Run the same restart request and answer:
+
+`n`
+
+Expected:
+
+`router -> approval interrupt -> human rejection -> no tool execution`
+
+Test 4 — Prompt-injection / unauthorized-action behavior:
+
+Verify retrieved evidence cannot independently cause a high-risk tool to execute.
+
+Test 5 — Checkpoint/state:
+
+Verify state is associated with thread_id and graph.get_state() returns the checkpointed state.
+
+## Day 8 completion criteria
+
+Day 8 becomes COMPLETE only after:
+
+- [ ] all deferred runtime tests pass
+- [ ] failures/fixes are recorded
+- [ ] PROJECT_STATE.md is updated with observed results
+- [ ] Day 8 changes are committed
+- [ ] changes are pushed to origin/main
+
+## Current blockers
+
+None for continuing the learning sprint.
+
+Day 8 runtime verification is intentionally deferred.
+
+## Next learning session
+
+# Day 9 — Classical ML Classifier
+
+Status: **COMPLETE**
+
+## Theory completed
+
+* [x] Supervised learning
+* [x] Features vs labels
+* [x] Train / validation / test split
+* [x] Stratified splitting
+* [x] TF-IDF
+* [x] Logistic Regression
+* [x] Model parameters vs hyperparameters
+* [x] Logistic Regression `C` and regularization
+* [x] Class imbalance
+* [x] Accuracy limitations
+* [x] Precision
+* [x] Recall
+* [x] F1 score
+* [x] Macro F1
+* [x] Confusion matrix
+* [x] Overfitting vs underfitting
+* [x] Data leakage
+* [x] Closed-set classification
+* [x] Probability estimates vs calibrated confidence
+
+## Implementation completed
+
+Implemented:
+
+`data/ml/incidents.csv`
+
+* 48 labeled synthetic incident examples
+* 6 classes:
+
+  * database
+  * cache
+  * tls
+  * authentication
+  * network
+  * deployment
+
+Implemented:
+
+`src/train_incident_classifier.py`
+
+* [x] Train / validation / test splitting
+* [x] Stratification
+* [x] TF-IDF + Logistic Regression pipeline
+* [x] Validation-based `C` selection
+* [x] Accuracy evaluation
+* [x] Macro-F1 evaluation
+* [x] Classification report
+* [x] Confusion matrix
+* [x] Final train+validation retraining
+* [x] Model serialization with joblib
+
+Implemented:
+
+`src/predict_incident.py`
+
+* [x] Loaded persisted model
+* [x] Classified unseen incidents
+* [x] Inspected `predict_proba()` output
+* [x] Tested difficult semantic paraphrases
+* [x] Tested unsupported input
+* [x] Tested ambiguous input
+
+Implemented:
+
+`src/compare_ml_llm_classifier.py`
+
+* [x] Compared TF-IDF + Logistic Regression against local Qwen
+* [x] Compared classification accuracy
+* [x] Compared inference latency
+* [x] Tested semantic paraphrases
+* [x] Tested unknown / unsupported incidents
+
+## Validation experiment
+
+Candidate hyperparameters:
+
+* `C=0.1` → validation macro-F1 `0.3667`
+* `C=1.0` → validation macro-F1 `0.5278`
+* `C=10.0` → validation macro-F1 `0.6667`
+
+Selected:
+
+`C = 10.0`
+
+## Final test results
+
+Test examples: `10`
+
+* Accuracy: `0.9000`
+* Macro F1: `0.9111`
+
+Only observed test error:
+
+`network → database`
+
+Network recall:
+
+`0.50`
+
+Database precision:
+
+`0.67`
+
+Important limitation:
+
+The test set is extremely small, so these numbers are learning results rather than production-quality performance claims.
+
+## Semantic failure experiment
+
+Examples demonstrated that TF-IDF performs well when useful lexical signals are present but can struggle with paraphrases having weak vocabulary overlap.
+
+Example failure:
+
+`Previously stored values cannot be retrieved quickly`
+
+Expected:
+
+`cache`
+
+Predicted:
+
+`network`
+
+Unsupported example:
+
+`Kafka consumer lag is continuously increasing`
+
+The ML classifier predicted:
+
+`database`
+
+because the model is a closed-set classifier and has no trained `unknown` class.
+
+## ML vs LLM comparison
+
+Eight difficult examples:
+
+* ML accuracy: `5/8 = 0.625`
+* Local Qwen accuracy: `4/8 = 0.500`
+
+Average latency:
+
+* ML: `3.543 ms`
+* LLM: `0.749 s`
+
+Observed ML inference was approximately 200x faster in this small experiment.
+
+Important:
+
+This experiment does not establish general ML superiority. The local Qwen model is very small and the evaluation sample contains only eight examples.
+
+## Key production lesson
+
+Use a small supervised classifier when:
+
+* labels are stable
+* enough labeled data exists
+* throughput is high
+* low latency matters
+* deterministic behavior is valuable
+
+Use an LLM when stronger semantic interpretation, flexible instructions, or broader reasoning are required.
+
+A hybrid architecture can use:
+
+`small classifier → uncertain case → LLM → optional human`
+
+Confidence/abstention thresholds must be evaluated and calibrated rather than guessed.
+
+## Model artifact
+
+Saved:
+
+`models/incident_classifier.joblib`
+
+Contains:
+
+* fitted TF-IDF vocabulary
+* fitted IDF statistics
+* trained Logistic Regression weights and biases
+
+## Day 9 blockers
+
+None.
+
+## Next learning session
+
+**Day 10 — Fine-tuning: SFT + LoRA / QLoRA**
+
+After Day 10:
+
+Return to the deferred Day 8 LangGraph/HITL runtime validation before Day 8 is marked fully complete.
