@@ -6,10 +6,13 @@ readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "httpx>=0.28.1",
+    "joblib>=1.5.3",
+    "langgraph>=1.2.11",
     "pgvector>=0.5.0",
     "psycopg[binary]>=3.3.4",
     "pydantic>=2.13.4",
     "rank-bm25>=0.2.2",
+    "scikit-learn>=1.9.0",
     "sentence-transformers>=5.7.0",
 ]
 

@@ -1,0 +1,54 @@
+text,label
+"PostgreSQL connection pool is exhausted",database
+"Database queries are timing out",database
+"Postgres has no free connections",database
+"Database connection limit has been reached",database
+"SQL queries are running extremely slowly",database
+"Application cannot connect to PostgreSQL",database
+"Database server is unavailable",database
+"Postgres connection requests keep failing",database
+
+"Redis cache is unavailable",cache
+"Redis memory usage reached the limit",cache
+"Cache entries are not being returned",cache
+"Redis server stopped responding",cache
+"Application cannot connect to Redis",cache
+"Cache lookup operations are timing out",cache
+"Redis eviction rate increased suddenly",cache
+"Cache service is experiencing high latency",cache
+
+"TLS certificate has expired",tls
+"SSL certificate validation failed",tls
+"TLS handshake is failing",tls
+"Certificate hostname does not match",tls
+"Client rejected the server certificate",tls
+"SSL handshake terminated unexpectedly",tls
+"Certificate chain cannot be verified",tls
+"TLS connection cannot be established",tls
+
+"OAuth token validation failed",authentication
+"JWT token is invalid",authentication
+"Users cannot authenticate with the identity provider",authentication
+"Login requests are being rejected",authentication
+"Authentication token has expired",authentication
+"Identity provider is unavailable",authentication
+"User credentials are being rejected",authentication
+"OIDC authentication failed",authentication
+
+"Service cannot reach the upstream host",network
+"Network connection is timing out",network
+"DNS resolution is failing",network
+"Packets are being dropped between services",network
+"Upstream server cannot be reached",network
+"Network latency increased significantly",network
+"Connection refused by remote host",network
+"Service hostname cannot be resolved",network
+
+"Latency increased after the latest deployment",deployment
+"New release caused application failures",deployment
+"Service became unhealthy after deployment",deployment
+"Errors started after version upgrade",deployment
+"Application started crashing after release",deployment
+"Latest build introduced a regression",deployment
+"Rollback fixed the issue introduced by deployment",deployment
+"New version caused request failures",deployment
