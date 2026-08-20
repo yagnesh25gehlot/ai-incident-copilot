@@ -6,9 +6,9 @@
 
 Project: **Production AI Incident & Knowledge Copilot**
 Sprint: **14-day AI Engineer capstone**
-Current day: Day 7 — Tool Calling + Agent Loop
-Current phase: Day 7 checkpoint
-Overall status: DAY 7 COMPLETE — final Git checkpoint pending
+Current day: Day 10 — Fine-tuning: SFT + LoRA / QLoRA
+Current phase: Day 10 checkpoint
+Overall status: DAY 10 COMPLETE — Git checkpoint pending
 
 ## Permanent local project root
 
@@ -1837,8 +1837,336 @@ None.
 
 ## Next learning session
 
-**Day 10 — Fine-tuning: SFT + LoRA / QLoRA**
+# Day 10 — Fine-tuning: SFT + LoRA / QLoRA
 
-After Day 10:
+Status: **COMPLETE**
 
-Return to the deferred Day 8 LangGraph/HITL runtime validation before Day 8 is marked fully complete.
+## Theory completed
+
+- [x] Pretraining vs fine-tuning
+- [x] Supervised Fine-Tuning (SFT)
+- [x] Parameter-Efficient Fine-Tuning (PEFT)
+- [x] LoRA intuition
+- [x] Low-rank update: ΔW = A × B
+- [x] LoRA adapters
+- [x] QLoRA intuition
+- [x] Quantized frozen base model + LoRA adapters
+- [x] Dataset formatting
+- [x] Prompt-completion training
+- [x] Completion-only loss
+- [x] Learning rate
+- [x] Epochs
+- [x] Batch size
+- [x] Gradient accumulation
+- [x] LoRA rank `r`
+- [x] `lora_alpha`
+- [x] `lora_dropout`
+- [x] `target_modules`
+- [x] Adapter save/load
+- [x] Adapter merge concept
+- [x] Training loss vs generalization
+- [x] Prompting vs RAG vs fine-tuning
+- [x] Fine-tuning vs classical ML tradeoffs
+
+## Training stack
+
+Base training model:
+
+`Qwen/Qwen2.5-0.5B-Instruct`
+
+Training libraries:
+
+- `transformers`
+- `peft`
+- `trl`
+- `datasets`
+- `accelerate`
+
+Hardware:
+
+- Apple Silicon
+- PyTorch MPS backend
+- MPS available: `True`
+
+Training precision:
+
+`float32`
+
+Reason:
+
+Initial FP16/MPS run produced `grad_norm=nan`.
+
+Switching to FP32 removed NaN gradients.
+
+## Dataset
+
+Created:
+
+`data/finetuning/incidents_sft.jsonl`
+
+Training examples:
+
+`18`
+
+Categories:
+
+- database
+- cache
+- tls
+- authentication
+- network
+- deployment
+
+Target response format:
+
+`CATEGORY: <category>`
+
+`SUMMARY: <short incident summary>`
+
+Created unseen evaluation set:
+
+`data/finetuning/incidents_eval.jsonl`
+
+Evaluation examples:
+
+`6`
+
+The evaluation examples intentionally use semantic paraphrases rather than exact training examples.
+
+## Implementation
+
+Implemented:
+
+`src/train_lora.py`
+
+Capabilities:
+
+- [x] Load prompt-completion JSONL dataset
+- [x] Load Hugging Face Qwen tokenizer
+- [x] Load training-compatible Qwen model
+- [x] Configure LoRA
+- [x] Attach LoRA adapters through PEFT
+- [x] Train using TRL `SFTTrainer`
+- [x] Completion-only training loss
+- [x] MPS training
+- [x] Gradient accumulation
+- [x] Inspect trainable parameter percentage
+- [x] Save LoRA adapter
+- [x] Save tokenizer
+
+Implemented:
+
+`src/evaluate_finetuned_model.py`
+
+Capabilities:
+
+- [x] Load unseen evaluation examples
+- [x] Evaluate base Qwen
+- [x] Load LoRA adapter onto base Qwen
+- [x] Evaluate LoRA-tuned model
+- [x] Parse generated category
+- [x] Check required output format
+- [x] Compare base vs LoRA results
+
+## LoRA configuration
+
+- `task_type = CAUSAL_LM`
+- `r = 8`
+- `lora_alpha = 16`
+- `lora_dropout = 0.05`
+- target modules:
+  - `q_proj`
+  - `k_proj`
+  - `v_proj`
+  - `o_proj`
+
+Training configuration:
+
+- batch size: `1`
+- gradient accumulation: `4`
+- learning rate: `1e-4`
+- sequence length: `128`
+- completion-only loss: enabled
+- packing: disabled
+
+## Trainable parameter result
+
+Observed:
+
+- Trainable parameters: `1,081,344`
+- Total parameters: `495,114,112`
+- Trainable percentage: `0.2184%`
+
+Therefore approximately:
+
+`99.78%`
+
+of the model parameters remained frozen.
+
+This experimentally demonstrated the core LoRA idea:
+
+train only a very small parameter-efficient adapter rather than modifying the entire pretrained model.
+
+## Initial training issue
+
+First FP16/MPS run produced:
+
+`grad_norm = nan`
+
+for all training steps.
+
+The dataset also produced prompt/completion tokenization-boundary warnings.
+
+Fixes:
+
+1. Added newline separator between prompt and completion.
+2. Changed training from FP16 to FP32.
+3. Disabled unsupported MPS pinned-memory behavior.
+
+After the fixes:
+
+- tokenization warnings disappeared
+- gradients became finite
+- adapter training completed successfully
+
+## Experiment 1 — 3 epochs
+
+Training:
+
+- examples: `18`
+- epochs: `3`
+- optimizer steps: `15`
+
+Final training loss:
+
+`4.0949`
+
+Base evaluation:
+
+- Category accuracy: `0/6 = 0.000`
+- Format accuracy: `0/6 = 0.000`
+
+LoRA evaluation:
+
+- Category accuracy: `0/6 = 0.000`
+- Format accuracy: `0/6 = 0.000`
+
+Observation:
+
+The LoRA adapter did not learn the intended structured output behavior.
+
+## Experiment 2 — controlled epoch increase
+
+Changed only:
+
+`num_train_epochs: 3 -> 15`
+
+Everything else remained unchanged.
+
+Training:
+
+- epochs: `15`
+- optimizer steps: `75`
+
+Final training loss:
+
+`4.0227`
+
+Loss continued to oscillate around approximately `4.0`.
+
+Evaluation remained:
+
+Base:
+
+- Category accuracy: `0/6`
+- Format accuracy: `0/6`
+
+LoRA:
+
+- Category accuracy: `0/6`
+- Format accuracy: `0/6`
+
+## Key experimental conclusion
+
+Increasing training from 3 epochs to 15 epochs did not materially improve the desired behavior.
+
+Therefore:
+
+**More epochs alone were not the solution.**
+
+The experiment was intentionally stopped rather than continuing blind hyperparameter tuning.
+
+Likely next areas to investigate in a larger fine-tuning project:
+
+- more training examples
+- more diverse examples
+- native Qwen chat-template formatting
+- validation dataset during training
+- different learning rate
+- broader LoRA target modules
+- different LoRA rank
+- stronger baseline prompt
+- larger base model
+
+These were intentionally not explored further because the Day 10 objective was to understand and execute one complete fine-tuning experiment rather than optimize a production model.
+
+## Key production lessons
+
+### Fine-tuning vs prompting
+
+Use prompting when the underlying model already has the capability and primarily needs clearer instructions.
+
+### Fine-tuning vs RAG
+
+Fine-tuning changes model behavior/weights.
+
+RAG changes context by supplying external evidence.
+
+Fine-tuning does not replace RAG for frequently changing knowledge.
+
+### Fine-tuning vs classical ML
+
+For the project's stable six-class incident classification task, the Day 9 TF-IDF + Logistic Regression classifier is significantly simpler and more appropriate than fine-tuning an LLM.
+
+Day 9 test result:
+
+- Accuracy: `0.9000`
+- Macro-F1: `0.9111`
+
+This does not mean classical ML is generally superior to LLMs.
+
+It demonstrates that simple closed-set classification may not justify the additional complexity and cost of an LLM.
+
+## Day 10 key mental model
+
+`Prompting -> change instructions`
+
+`RAG -> change context`
+
+`Fine-tuning -> change model behavior/weights`
+
+LoRA:
+
+`frozen pretrained model + small trainable low-rank adapters`
+
+QLoRA:
+
+`quantized frozen pretrained model + LoRA adapters`
+
+## Day 10 blockers
+
+None.
+
+## Day 10 completion status
+
+Day 10 learning and implementation are complete.
+
+Git checkpoint pending.
+
+## Next exact action
+
+Commit and push the Day 10 implementation and project-state update.
+
+After the Day 10 Git checkpoint:
+
+**Return to Day 8 and execute the deferred LangGraph checkpointing / HITL / guardrail runtime validation suite before proceeding to Day 11.**

@@ -1,0 +1,6 @@
+{"incident":"Workers are waiting because no free DB slots are available.","expected_category":"database"}
+{"incident":"Previously cached objects cannot be retrieved after the Redis node failed.","expected_category":"cache"}
+{"incident":"Secure connections fail because the presented certificate is no longer valid.","expected_category":"tls"}
+{"incident":"Employees are unable to log in because the external identity service is down.","expected_category":"authentication"}
+{"incident":"The API hostname cannot be resolved by the application servers.","expected_category":"network"}
+{"incident":"Failures started only after yesterday's new application build was rolled out.","expected_category":"deployment"}

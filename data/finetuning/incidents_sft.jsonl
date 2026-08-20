@@ -1,0 +1,23 @@
+{"prompt":"Incident: Payment requests are timing out because every PostgreSQL connection is occupied.\nResponse:","completion":"CATEGORY: database\nSUMMARY: PostgreSQL connection pool is exhausted."}
+{"prompt":"Incident: The application cannot acquire another database connection from the pool.\nResponse:","completion":"CATEGORY: database\nSUMMARY: The database connection pool has no available connections."}
+{"prompt":"Incident: Queries are failing because PostgreSQL has reached its connection limit.\nResponse:","completion":"CATEGORY: database\nSUMMARY: PostgreSQL has reached its connection capacity."}
+
+{"prompt":"Incident: Redis has run out of memory and cached values cannot be stored.\nResponse:","completion":"CATEGORY: cache\nSUMMARY: Redis memory exhaustion is preventing cache writes."}
+{"prompt":"Incident: Cached session data disappeared after Redis became unavailable.\nResponse:","completion":"CATEGORY: cache\nSUMMARY: Redis unavailability is causing cached session data to be inaccessible."}
+{"prompt":"Incident: The cache service is evicting keys aggressively because memory is full.\nResponse:","completion":"CATEGORY: cache\nSUMMARY: Cache memory pressure is causing aggressive key eviction."}
+
+{"prompt":"Incident: Clients reject the server because its TLS certificate has expired.\nResponse:","completion":"CATEGORY: tls\nSUMMARY: TLS connections are failing because the server certificate expired."}
+{"prompt":"Incident: HTTPS connections fail during certificate verification.\nResponse:","completion":"CATEGORY: tls\nSUMMARY: TLS certificate verification is failing."}
+{"prompt":"Incident: The client and server cannot complete the TLS handshake.\nResponse:","completion":"CATEGORY: tls\nSUMMARY: TLS handshake negotiation is failing."}
+
+{"prompt":"Incident: Users cannot sign in because the identity provider is unavailable.\nResponse:","completion":"CATEGORY: authentication\nSUMMARY: Authentication is failing because the identity provider is unavailable."}
+{"prompt":"Incident: Login requests are rejected because authentication tokens are invalid.\nResponse:","completion":"CATEGORY: authentication\nSUMMARY: Invalid authentication tokens are causing login failures."}
+{"prompt":"Incident: User sessions cannot be created because credential validation is failing.\nResponse:","completion":"CATEGORY: authentication\nSUMMARY: Credential validation failures are preventing authentication."}
+
+{"prompt":"Incident: The service cannot resolve the database hostname through DNS.\nResponse:","completion":"CATEGORY: network\nSUMMARY: DNS resolution failure is preventing network connectivity."}
+{"prompt":"Incident: Requests between services fail because the destination host is unreachable.\nResponse:","completion":"CATEGORY: network\nSUMMARY: Network connectivity failure is making the destination host unreachable."}
+{"prompt":"Incident: Connections are being dropped because packets are lost between the services.\nResponse:","completion":"CATEGORY: network\nSUMMARY: Network packet loss is disrupting service connections."}
+
+{"prompt":"Incident: Error rates increased immediately after version 2.4.1 was released.\nResponse:","completion":"CATEGORY: deployment\nSUMMARY: The new deployment is associated with the increased error rate."}
+{"prompt":"Incident: The application stopped starting after the latest release was deployed.\nResponse:","completion":"CATEGORY: deployment\nSUMMARY: The latest deployment introduced an application startup failure."}
+{"prompt":"Incident: Requests began failing after a configuration change was rolled out.\nResponse:","completion":"CATEGORY: deployment\nSUMMARY: A newly deployed configuration change is causing request failures."}
